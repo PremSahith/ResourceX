@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResourceX - System Administration</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">R</div>
+                <div class="logo-text">ResourceX</div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item active" data-target="user-manage-view">
+                    <span class="icon">👥</span> User Management
+                </li>
+                <li class="nav-item" data-target="dept-manage-view">
+                    <span class="icon">🏢</span> Department Configuration
+                </li>
+                <li class="nav-item" data-target="role-manage-view">
+                    <span class="icon">🛡️</span> Roles & Permissions
+                </li>
+            </ul>
+
+            <div class="user-profile-widget">
+                <div class="user-avatar" style="background:#1e293b; color:white; display:flex; align-items:center; justify-content:center;font-weight:bold; font-size:1rem">A</div>
+                <div class="user-info">
+                    <span class="user-name">System Root</span>
+                    <span class="user-role">Administrator</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <header class="top-header">
+                <div class="search-bar">
+                    <span style="color:#94a3b8">🔍</span>
+                    <input type="text" placeholder="Search accounts...">
+                </div>
+                <div class="header-actions">
+                    <button class="btn-primary" onclick="alert('Open Add Dialog')">+ Add Account</button>
+                    <button class="icon-btn">⚙️</button>
+                </div>
+            </header>
+
+            <main class="content-area">
+
+                <!-- 1. User Management -->
+                <div id="user-manage-view" class="view-section active">
+                    <h1 class="page-title">User Management</h1>
+                    <p class="page-subtitle">Configure system users, assignments, and structural roles.</p>
+
+                    <div class="data-section">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>System Role</th>
+                                    <th>Department Access</th>
+                                    <th>Status</th>
+                                    <th style="text-align:right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="font-weight:600">Yaswanth Kumar</td>
+                                    <td><span class="badge" style="background:#cbd5e1; color:#0f172a">Requestor</span></td>
+                                    <td>IT Services</td>
+                                    <td><span class="badge allocated">Active</span></td>
+                                    <td style="text-align:right"><button class="btn-secondary" style="font-size:0.75rem">Edit Access</button></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:600">Sarah Jenkins</td>
+                                    <td><span class="badge pending" style="background:#dbeafe; color:#1d4ed8">Dept Head</span></td>
+                                    <td>IT Services (Lead)</td>
+                                    <td><span class="badge allocated">Active</span></td>
+                                    <td style="text-align:right"><button class="btn-secondary" style="font-size:0.75rem">Edit Access</button></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:600">Mike Torres</td>
+                                    <td><span class="badge pending">Staff Op</span></td>
+                                    <td>Global</td>
+                                    <td><span class="badge allocated">Active</span></td>
+                                    <td style="text-align:right"><button class="btn-secondary" style="font-size:0.75rem">Edit Access</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. Dept Configuration -->
+                <div id="dept-manage-view" class="view-section">
+                    <h1 class="page-title">Department Topology</h1>
+                    <p class="page-subtitle">Define organizational structures and departmental heads.</p>
+
+                    <div style="background:white; padding:2rem; border-radius:12px; border:1px solid #e2e8f0; display:flex; flex-direction:column; gap:1rem;">
+                        <div style="display:flex; justify-content:space-between; padding-bottom:1rem; border-bottom:1px solid #e2e8f0;">
+                            <div><strong style="font-size:1.1rem; color:var(--primary-color)">IT Services</strong><div style="color:#64748b; font-size:0.875rem">Head: Sarah Jenkins</div></div>
+                            <button class="btn-danger" style="font-size:0.75rem">Delete</button>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding-bottom:1rem; border-bottom:1px solid #e2e8f0;">
+                            <div><strong style="font-size:1.1rem; color:var(--primary-color)">Logistics Ops</strong><div style="color:#64748b; font-size:0.875rem">Head: Marcus V.</div></div>
+                            <button class="btn-danger" style="font-size:0.75rem">Delete</button>
+                        </div>
+                        <div style="margin-top:1rem;">
+                            <button class="btn-primary">+ Add New Department</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Roles and Perms -->
+                <div id="role-manage-view" class="view-section">
+                    <h1 class="page-title">Global Role Matrix</h1>
+                    <p class="page-subtitle">Configure which roles have access to certain system features.</p>
+                    
+                    <table class="table" style="background:white; border-radius:12px; overflow:hidden; box-shadow:var(--shadow-sm)">
+                        <thead>
+                            <tr>
+                                <th>Feature Mapping</th>
+                                <th>Requestor</th>
+                                <th>Dept Head</th>
+                                <th>Staff</th>
+                                <th>Registrar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight:600">Procurement Module</td>
+                                <td>-</td>
+                                <td>Submit Only</td>
+                                <td>Fulfillment</td>
+                                <td><span style="color:#16a34a; font-weight:bold">Full Approval</span></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:600">Maintenance & Returns</td>
+                                <td>Submit & Return</td>
+                                <td>View Status</td>
+                                <td><span style="color:#16a34a; font-weight:bold">Process & Log</span></td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>

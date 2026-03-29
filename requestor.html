@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResourceX - Requestor Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">R</div>
+                <div class="logo-text">ResourceX</div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item" data-target="dashboard-view">
+                    <span class="icon">⊞</span> Dashboard
+                </li>
+                <li class="nav-item" data-target="request-view">
+                    <span class="icon">⊕</span> Request Resource
+                </li>
+                <li class="nav-item active" data-target="my-requests-view">
+                    <span class="icon">≡</span> My Requests
+                </li>
+                <li class="nav-item" data-target="my-resources-view">
+                    <span class="icon">📦</span> My Resources
+                </li>
+            </ul>
+
+            <div class="user-profile-widget">
+                <div class="user-avatar">
+                    <img src="https://i.pravatar.cc/150?img=11" alt="User">
+                </div>
+                <div class="user-info">
+                    <span class="user-name">Yaswanth Kumar</span>
+                    <span class="user-role">Requestor ID: 9921</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="search-bar">
+                    <span style="color:#94a3b8">🔍</span>
+                    <input type="text" placeholder="Search requests...">
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn">🔔</button>
+                    <button class="icon-btn">⚙️</button>
+                    <button class="btn-primary" onclick="app.switchView('request-view')">Request Resource</button>
+                </div>
+            </header>
+
+            <!-- Scrollable Content Area -->
+            <main class="content-area">
+
+                <!-- 1. Dashboard View (Placeholder) -->
+                <div id="dashboard-view" class="view-section">
+                    <h1 class="page-title">Welcome back, Yaswanth</h1>
+                    <p class="page-subtitle">Here is an overview of your resource activities.</p>
+                    <div class="history-block">
+                        <div class="history-subtitle">HISTORICAL PERFORMANCE</div>
+                        <div class="history-title">Your Resource Utilization<br>Score is <span style="color:#93c5fd">A+ This Quarter</span></div>
+                        <div style="display:flex; justify-content:space-between; margin-top:2rem;">
+                            <div><div style="font-size:0.75rem; color:#cbd5e1">TOTAL ITEMS</div><div style="font-size:1.5rem; font-weight:700">1,204</div></div>
+                            <div><div style="font-size:0.75rem; color:#cbd5e1">FULFILLMENT</div><div style="font-size:1.5rem; font-weight:700">98.2%</div></div>
+                            <div><div style="font-size:0.75rem; color:#cbd5e1">AVG LEAD TIME</div><div style="font-size:1.5rem; font-weight:700">2.4 Days</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Request Resource View -->
+                <div id="request-view" class="view-section">
+                    <h1 class="page-title">Request Resource</h1>
+                    <p class="page-subtitle">Submit a new request for organizational resources.</p>
+                    
+                    <div class="form-card">
+                        <form id="requestForm" onsubmit="app.submitRequest(event)">
+                            <div class="form-group">
+                                <label class="form-label">Managing Department</label>
+                                <select class="form-control" id="req-dept" required onchange="app.updateResourceDropdown()">
+                                    <option value="" disabled selected>Select Department</option>
+                                    <option value="IT Services">IT Services</option>
+                                    <option value="Logistics Ops">Logistics Ops</option>
+                                    <option value="HR Dept">HR Dept</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Resource Type</label>
+                                <select class="form-control" id="req-type" required>
+                                    <option value="" disabled selected>Select Resource Type</option>
+                                    <!-- Options populated by JS -->
+                                </select>
+                                <div style="margin-top:0.5rem;">
+                                    <a href="#" style="font-size:0.875rem; font-weight:600;" onclick="app.toggleNewResourceForm(event)">+ Request New Resource</a>
+                                </div>
+                            </div>
+
+                            <!-- Hidden New Resource Form -->
+                            <div id="new-resource-fields" style="display:none; padding:1rem; background:#f8fafc; border-radius:8px; margin-bottom:1.5rem;">
+                                <div class="form-group">
+                                    <label class="form-label">New Resource Name</label>
+                                    <input type="text" class="form-control" id="req-new-name">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="req-qty" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Reason</label>
+                                <textarea class="form-control" id="req-reason" rows="3" required></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary">Submit Request</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 3. My Requests View -->
+                <div id="my-requests-view" class="view-section active">
+                    <h1 class="page-title">My Requests</h1>
+                    <p class="page-subtitle">Track and manage your resource allocation requests. Review statuses, confirm receipts, and audit your history across departments.</p>
+
+                    <!-- Stats Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-title">Total Pending</div>
+                            <div class="stat-value-row">
+                                <div class="stat-value" id="stat-pending">08</div>
+                                <span class="badge pending">Action Needed</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Approved</div>
+                            <div class="stat-value-row">
+                                <div class="stat-value" id="stat-approved">24</div>
+                                <span class="badge" style="background:#e0f2fe; color:#0369a1">Processing</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Ready for Pickup</div>
+                            <div class="stat-value-row" style="border-left: 4px solid #16a34a; padding-left: 1rem;">
+                                <div class="stat-value" style="color:#16a34a" id="stat-allocated">03</div>
+                                <span class="badge allocated">Allocated</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Completion Rate</div>
+                            <div class="stat-value-row">
+                                <div class="stat-value" style="color:#0f172a">92%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Requests Table -->
+                    <div class="data-section">
+                        <div class="data-section-header">
+                            <div class="data-section-title">Active Requests</div>
+                            <div class="data-filters">
+                                <button class="btn-secondary">Filters</button>
+                                <button class="btn-secondary">Export CSV</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Request ID</th>
+                                        <th>Department</th>
+                                        <th>Resource Type</th>
+                                        <th>Quantity</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th style="text-align:right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="requests-tbody">
+                                    <!-- JS will populate -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 4. My Resources View -->
+                <div id="my-resources-view" class="view-section">
+                    <h1 class="page-title">My Resources</h1>
+                    <p class="page-subtitle">Currently allocated resources to you.</p>
+
+                    <div class="data-section">
+                        <div class="data-section-header">
+                            <div class="data-section-title">Allocated Assets</div>
+                            <div class="search-bar" style="width:250px;">
+                                <span style="color:#94a3b8">🔍</span>
+                                <input type="text" placeholder="Search resources...">
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Resource Code</th>
+                                        <th>Resource Type</th>
+                                        <th>Department</th>
+                                        <th>Allocated Date</th>
+                                        <th>Status</th>
+                                        <th style="text-align:right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resources-tbody">
+                                    <!-- JS will populate -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script src="js/requestor.js"></script>
+</body>
+</html>

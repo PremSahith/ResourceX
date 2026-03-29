@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResourceX - Staff Operations Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo-icon">R</div>
+                <div class="logo-text">ResourceX</div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item active" data-target="allocations-view">
+                    <span class="icon">🔄</span> Allocation Requests
+                </li>
+                <li class="nav-item" data-target="registration-view">
+                    <span class="icon">🏷️</span> Resource Registration
+                </li>
+                <li class="nav-item" data-target="manage-view">
+                    <span class="icon">📦</span> Manage Resources
+                </li>
+                <li class="nav-item" data-target="maintenance-view">
+                    <span class="icon">🛠️</span> Maintenance & Turns
+                </li>
+                <li class="nav-item" data-target="proc-tasks-view">
+                    <span class="icon">📋</span> Procurement Tasks
+                </li>
+            </ul>
+
+            <div class="user-profile-widget">
+                <div class="user-avatar">
+                    <img src="https://i.pravatar.cc/150?img=13" alt="User">
+                </div>
+                <div class="user-info">
+                    <span class="user-name">Mike Torres</span>
+                    <span class="user-role">Operations Staff</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <header class="top-header">
+                <div class="search-bar">
+                    <span style="color:#94a3b8">🔍</span>
+                    <input type="text" placeholder="Search operations...">
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="staffApp.switchView('registration-view')">+ Register Asset</button>
+                    <button class="icon-btn">🔔</button>
+                    <button class="icon-btn">⚙️</button>
+                </div>
+            </header>
+
+            <main class="content-area">
+
+                <!-- 1. Allocation Requests View -->
+                <div id="allocations-view" class="view-section active">
+                    <h1 class="page-title">Allocation Requests</h1>
+                    <p class="page-subtitle">Assign physical inventory assets to approved department requests.</p>
+
+                    <div class="data-section">
+                        <div class="data-section-header">
+                            <div class="data-section-title">Pending Assignments</div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Req ID</th>
+                                        <th>Department</th>
+                                        <th>Resource Type</th>
+                                        <th>Qty</th>
+                                        <th style="min-width: 200px;">Assign Resources</th>
+                                        <th style="text-align:right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allocation-tbody">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Resource Registration -->
+                <div id="registration-view" class="view-section">
+                    <h1 class="page-title">Resource Registration</h1>
+                    <p class="page-subtitle">Onboard newly purchased resources into the system inventory.</p>
+
+                    <div class="form-card" style="max-width:100%">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
+                            <h3 class="data-section-title">Bulk Asset Registration</h3>
+                            <button class="btn-secondary" onclick="staffApp.addRegistrationRow()">+ Add Row</button>
+                        </div>
+                        
+                        <table class="table" style="background:#f8fafc; border-radius:8px">
+                            <thead>
+                                <tr>
+                                    <th>Resource Code</th>
+                                    <th>Type/Model</th>
+                                    <th>Manufacturer</th>
+                                    <th>Location</th>
+                                    <th>S/N</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registration-tbody">
+                                <tr>
+                                    <td><input type="text" class="form-control" value="RES-Auto1" readonly></td>
+                                    <td><input type="text" class="form-control" placeholder="e.g. MacBook Pro"></td>
+                                    <td><input type="text" class="form-control" placeholder="Apple"></td>
+                                    <td><input type="text" class="form-control" placeholder="HQ-Floor 2"></td>
+                                    <td><input type="text" class="form-control" placeholder="Serial No"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <button class="btn-primary" onclick="staffApp.submitRegistration()">Register Assets to Available</button>
+                    </div>
+                </div>
+
+                <!-- 3. Manage Resources -->
+                <div id="manage-view" class="view-section">
+                    <h1 class="page-title">Global Inventory</h1>
+                    <p class="page-subtitle">Browse all system resources, modify entries, and audit statuses.</p>
+
+                    <div class="data-section">
+                        <div class="data-section-header">
+                            <div class="data-section-title">Asset List</div>
+                            <div class="search-bar" style="width:250px;">
+                                <span style="color:#94a3b8">🔍</span>
+                                <input type="text" placeholder="Search by Code or Type...">
+                            </div>
+                        </div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Location</th>
+                                    <th style="text-align:right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-tbody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 4. Maintenance & Returns -->
+                <div id="maintenance-view" class="view-section">
+                    <h1 class="page-title">Maintenance & Returns</h1>
+                    <p class="page-subtitle">Process repair tickets and inspect returned assets.</p>
+
+                    <div style="display:flex; gap:2rem;">
+                        <!-- Maintenance Queue -->
+                        <div class="data-section" style="flex:1">
+                            <div class="data-section-header">
+                                <div class="data-section-title">Repair Queue</div>
+                            </div>
+                            <table class="table">
+                                <tbody id="maint-tbody">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Return Queue -->
+                        <div class="data-section" style="flex:1">
+                            <div class="data-section-header">
+                                <div class="data-section-title">Returned Returns Inspection</div>
+                            </div>
+                            <table class="table">
+                                <tbody id="return-tbody">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Procurement Tasks -->
+                <div id="proc-tasks-view" class="view-section">
+                    <h1 class="page-title">Procurement Fulfillment</h1>
+                    <p class="page-subtitle">Process Registrar-approved purchases by logging vendor and invoice data.</p>
+
+                    <div class="data-section">
+                        <table class="table" id="proctask-tbody">
+                            <thead>
+                                <tr>
+                                    <th>Task ID / Type</th>
+                                    <th>Qty Found</th>
+                                    <th>Vendor & Invoice</th>
+                                    <th style="text-align:right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Mock Row -->
+                                <tr>
+                                    <td>
+                                        <div class="td-id">PT-9901</div>
+                                        <div style="font-size:0.75rem; color:#64748b">MacBook Pro M3</div>
+                                    </td>
+                                    <td>20</td>
+                                    <td>
+                                        <input type="text" class="form-control" style="margin-bottom:0.25rem; font-size:0.75rem" placeholder="Vendor Name">
+                                        <input type="text" class="form-control" style="font-size:0.75rem" placeholder="Invoice Number">
+                                    </td>
+                                    <td style="text-align:right; vertical-align:middle">
+                                        <button class="btn-primary" onclick="alert('Procurement logged. Please register assets.')">Log Purchase</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <script src="js/staff.js"></script>
+</body>
+</html>
