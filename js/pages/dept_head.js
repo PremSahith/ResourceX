@@ -1,4 +1,14 @@
 const deptApp = {
+    stockData: [
+        { id: "s1", resourceType: "Laptop", currentQuantity: 18, thresholdLevel: 15 },
+        { id: "s2", resourceType: "Projector", currentQuantity: 8, thresholdLevel: 10 },
+        { id: "s3", resourceType: "Tablet", currentQuantity: 3, thresholdLevel: 8 },
+        { id: "s4", resourceType: "Monitor", currentQuantity: 2, thresholdLevel: 5 },
+        { id: "s5", resourceType: "Router", currentQuantity: 12, thresholdLevel: 10 },
+        { id: "s6", resourceType: "Printer", currentQuantity: 6, thresholdLevel: 6 }
+    ],
+    editStockId: null,
+
     init: function() {
         const user = Store.getCurrentUser();
         if(!user || user.role !== 'Dept Head') {
@@ -15,6 +25,7 @@ const deptApp = {
         this.renderDeptResources();
         this.renderProcurements();
         this.renderDashboard();
+        this.renderStockMonitoring();
     },
 
     bindNav: function() {
@@ -287,6 +298,113 @@ const deptApp = {
         Store.showToast("Procurement Request submitted and auto-approved for Registrar.", "success");
         document.getElementById('procurementForm').reset();
         this.renderProcurements();
+    },
+
+    // Stock Monitoring
+    renderStockMonitoring: function() {
+        const tbody = document.getElementById('stock-monitoring-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        let safeCount = 0;
+        let nearCount = 0;
+        let lowCount = 0;
+
+        this.stockData.forEach(item => {
+            let status = '';
+            let statusBadge = '';
+            let showSendReq = false;
+
+            if (item.currentQuantity >= item.thresholdLevel) {
+                status = 'Safe';
+                statusBadge = `<span class="badge badge-stock-safe">Safe</span>`;
+                safeCount++;
+            } else if (item.currentQuantity >= item.thresholdLevel * 0.7) {
+                status = 'Near Threshold';
+                statusBadge = `<span class="badge badge-stock-near">Near Threshold</span>`;
+                nearCount++;
+            } else {
+                status = 'Low Stock';
+                statusBadge = `<span class="badge badge-stock-low">Low Stock</span>`;
+                lowCount++;
+                showSendReq = true;
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.resourceType}</td>
+                <td>${item.currentQuantity}</td>
+                <td>${item.thresholdLevel}</td>
+                <td>${statusBadge}</td>
+                <td style="text-align:right">
+                    <button class="btn-ghost btn-ghost-primary" onclick="deptApp.openStockModal('${item.id}')">
+                        <span class="material-symbols-outlined">edit</span> Edit Threshold
+                    </button>
+                    ${showSendReq ? `
+                    <button class="btn-ghost btn-ghost-danger" onclick="deptApp.sendStockRequest('${item.resourceType}')">
+                        <span class="material-symbols-outlined">send</span> Send Request
+                    </button>
+                    ` : ''}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const safeEl = document.getElementById('stock-safe-count');
+        const nearEl = document.getElementById('stock-near-count');
+        const lowEl = document.getElementById('stock-low-count');
+
+        if(safeEl) safeEl.textContent = safeCount;
+        if(nearEl) nearEl.textContent = nearCount;
+        if(lowEl) lowEl.textContent = lowCount;
+    },
+
+    openStockModal: function(id) {
+        const item = this.stockData.find(i => i.id === id);
+        if(!item) return;
+        this.editStockId = id;
+        document.getElementById('stock-modal-resource').textContent = `Resource: ${item.resourceType}`;
+        document.getElementById('stock-current-qty').value = item.currentQuantity;
+        document.getElementById('stock-threshold-input').value = item.thresholdLevel;
+        document.getElementById('stock-edit-modal').classList.add('active');
+    },
+
+    closeStockModal: function() {
+        this.editStockId = null;
+        document.getElementById('stock-edit-modal').classList.remove('active');
+        document.getElementById('stock-threshold-input').value = '';
+    },
+
+    saveStockThreshold: function() {
+        if (!this.editStockId) return;
+        const val = parseInt(document.getElementById('stock-threshold-input').value);
+        if (isNaN(val) || val < 0) {
+            Store.showToast("Threshold must be a non-negative integer.", "error");
+            return;
+        }
+
+        const itemIndex = this.stockData.findIndex(i => i.id === this.editStockId);
+        if(itemIndex > -1) {
+            this.stockData[itemIndex].thresholdLevel = val;
+            Store.showToast("Threshold updated successfully.", "success");
+            this.renderStockMonitoring();
+            this.closeStockModal();
+        }
+    },
+
+    sendStockRequest: function(resourceType) {
+        this.switchView('procurement-view');
+        
+        // Update nav active state
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        const navItem = document.querySelector('.nav-item[data-target="procurement-view"]');
+        if(navItem) navItem.classList.add('active');
+        
+        const procTypeInput = document.getElementById('proc-type');
+        if (procTypeInput) {
+            procTypeInput.value = resourceType;
+            procTypeInput.focus();
+        }
     },
     
     logout: function() {

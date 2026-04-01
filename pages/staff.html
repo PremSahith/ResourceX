@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="../css/components/form.css">
     <link rel="stylesheet" href="../css/components/badge.css">
     <link rel="stylesheet" href="../css/components/toast.css">
+    <link rel="stylesheet" href="../css/components/stock-monitoring.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0">
 </head>
 <body>
@@ -41,6 +42,9 @@
                 </li>
                 <li class="nav-item" data-target="proc-tasks-view">
                     <span class="material-symbols-outlined">assignment</span> Procurement Tasks
+                </li>
+                <li class="nav-item" data-target="stock-monitoring-view">
+                    <span class="material-symbols-outlined">bar_chart</span> Stock Monitoring
                 </li>
             </ul>
         </app-sidebar>
@@ -213,7 +217,7 @@
                             <div class="data-section-title">Asset List</div>
                             <div class="search-bar" style="width:250px;">
                                 <span class="material-symbols-outlined" style="color:#94a3b8">search</span>
-                                <input type="text" placeholder="Search by Code or Type...">
+                                <input type="text" placeholder="Search by Code or Type..." onkeyup="Store.filterTable(this, 'inventory-tbody')">
                             </div>
                         </div>
                         <table class="table">
@@ -369,7 +373,84 @@
                     </div>
                 </div>
 
+                <!-- 6. Stock Monitoring -->
+                <div id="stock-monitoring-view" class="view-section">
+                    <h1 class="page-title">Global Stock Monitoring</h1>
+                    <p class="page-subtitle">Monitor resource stock levels and configure global thresholds.</p>
+
+                    <!-- Summary Cards -->
+                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 2rem;">
+                        <div class="stat-card stock-safe" id="stock-safe-card">
+                            <div class="stat-title">Safe Stock</div>
+                            <div class="stat-value-row">
+                                <div class="stat-value" id="stock-safe-count">0</div>
+                                <span class="material-symbols-outlined" style="font-size:1.8rem">check_circle</span>
+                            </div>
+                        </div>
+                        <div class="stat-card stock-near" id="stock-near-card">
+                            <div class="stat-title">Near Threshold</div>
+                            <div class="stat-value-row">
+                                <div class="stat-value" id="stock-near-count">0</div>
+                                <span class="material-symbols-outlined" style="font-size:1.8rem">warning</span>
+                            </div>
+                        </div>
+                        <div class="stat-card stock-low" id="stock-low-card">
+                            <div class="stat-title">Low Stock</div>
+                            <div class="stat-value-row">
+                                <div class="stat-value" id="stock-low-count">0</div>
+                                <span class="material-symbols-outlined" style="font-size:1.8rem">error</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stock Table -->
+                    <div class="data-section">
+                        <div class="data-section-header">
+                            <div class="data-section-title">Resource Stock Levels</div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Resource Type</th>
+                                        <th>Current Quantity</th>
+                                        <th>Threshold Level</th>
+                                        <th>Status</th>
+                                        <th style="text-align:right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stock-monitoring-tbody">
+                                    <!-- Rendered by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             </main>
+        </div>
+    </div>
+
+    <!-- Edit Threshold Dialog -->
+    <div id="stock-edit-modal" class="stock-modal-overlay">
+        <div class="stock-modal-content">
+            <div class="stock-modal-header">
+                <h3 class="stock-modal-title">Edit Threshold</h3>
+                <button onclick="staffApp.closeStockModal()" class="stock-modal-close">&#x2715;</button>
+            </div>
+            <div id="stock-modal-resource" class="stock-modal-resource-info"></div>
+            <div class="stock-modal-field">
+                <label class="stock-modal-label">Current Quantity</label>
+                <input id="stock-current-qty" type="number" disabled class="stock-modal-input">
+            </div>
+            <div class="stock-modal-field last">
+                <label class="stock-modal-label">Threshold Level</label>
+                <input id="stock-threshold-input" type="number" min="0" class="stock-modal-input">
+            </div>
+            <div class="stock-modal-actions">
+                <button onclick="staffApp.closeStockModal()" class="btn-secondary">Cancel</button>
+                <button onclick="staffApp.saveStockThreshold()" class="btn-primary">Save Threshold</button>
+            </div>
         </div>
     </div>
 

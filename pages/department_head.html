@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="../css/components/form.css">
     <link rel="stylesheet" href="../css/components/badge.css">
     <link rel="stylesheet" href="../css/components/toast.css">
+    <link rel="stylesheet" href="../css/components/stock-monitoring.css">
     <style>
         .trend-chart { height: 150px; background: #e0f2fe; border-radius: 8px; margin-top: 1rem; display: flex; align-items: flex-end; padding: 1rem; gap: 0.5rem; }
         .trend-bar { background: var(--primary-color); width: 100%; border-radius: 4px 4px 0 0; }
@@ -228,7 +229,7 @@
                             <div class="data-section-title">Current Inventory</div>
                             <div class="search-bar" style="width:250px;">
                                 <span class="material-symbols-outlined" style="color:#94a3b8">search</span>
-                                <input type="text" placeholder="Filter resources...">
+                                <input type="text" placeholder="Filter resources..." onkeyup="Store.filterTable(this, 'dept-resources-tbody')">
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -306,25 +307,25 @@
 
                     <!-- Summary Cards -->
                     <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 2rem;">
-                        <div class="stat-card" id="stock-safe-card" style="background:#f0fdf4; border:1px solid #bbf7d0;">
-                            <div class="stat-title" style="color:#16a34a;">Safe Stock</div>
+                        <div class="stat-card stock-safe" id="stock-safe-card">
+                            <div class="stat-title">Safe Stock</div>
                             <div class="stat-value-row">
-                                <div class="stat-value" id="stock-safe-count" style="color:#16a34a;">0</div>
-                                <span class="material-symbols-outlined" style="font-size:1.8rem; color:#16a34a;">check_circle</span>
+                                <div class="stat-value" id="stock-safe-count">0</div>
+                                <span class="material-symbols-outlined" style="font-size:1.8rem">check_circle</span>
                             </div>
                         </div>
-                        <div class="stat-card" id="stock-near-card" style="background:#fefce8; border:1px solid #fef08a;">
-                            <div class="stat-title" style="color:#ca8a04;">Near Threshold</div>
+                        <div class="stat-card stock-near" id="stock-near-card">
+                            <div class="stat-title">Near Threshold</div>
                             <div class="stat-value-row">
-                                <div class="stat-value" id="stock-near-count" style="color:#ca8a04;">0</div>
-                                <span class="material-symbols-outlined" style="font-size:1.8rem; color:#ca8a04;">warning</span>
+                                <div class="stat-value" id="stock-near-count">0</div>
+                                <span class="material-symbols-outlined" style="font-size:1.8rem">warning</span>
                             </div>
                         </div>
-                        <div class="stat-card" id="stock-low-card" style="background:#fef2f2; border:1px solid #fecaca;">
-                            <div class="stat-title" style="color:#dc2626;">Low Stock</div>
+                        <div class="stat-card stock-low" id="stock-low-card">
+                            <div class="stat-title">Low Stock</div>
                             <div class="stat-value-row">
-                                <div class="stat-value" id="stock-low-count" style="color:#dc2626;">0</div>
-                                <span class="material-symbols-outlined" style="font-size:1.8rem; color:#dc2626;">error</span>
+                                <div class="stat-value" id="stock-low-count">0</div>
+                                <span class="material-symbols-outlined" style="font-size:1.8rem">error</span>
                             </div>
                         </div>
                     </div>
@@ -359,22 +360,22 @@
     </div>
 
     <!-- Edit Threshold Dialog -->
-    <div id="stock-edit-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; justify-content:center; align-items:center;">
-        <div style="background:white; padding:2rem; border-radius:14px; width:100%; max-width:420px; box-shadow:0 20px 40px rgba(0,0,0,0.15);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h3 style="font-size:1.1rem; font-weight:700; color:#0f172a; margin:0;">Edit Threshold</h3>
-                <button onclick="deptApp.closeStockModal()" style="border:none; background:none; cursor:pointer; color:#64748b; font-size:1.5rem; line-height:1;">&#x2715;</button>
+    <div id="stock-edit-modal" class="stock-modal-overlay">
+        <div class="stock-modal-content">
+            <div class="stock-modal-header">
+                <h3 class="stock-modal-title">Edit Threshold</h3>
+                <button onclick="deptApp.closeStockModal()" class="stock-modal-close">&#x2715;</button>
             </div>
-            <div id="stock-modal-resource" style="font-size:0.875rem; font-weight:600; color:var(--primary-color); margin-bottom:1.25rem; padding:0.5rem 0.75rem; background:#f0f7ff; border-radius:6px;"></div>
-            <div style="margin-bottom:1rem;">
-                <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:0.4rem;">Current Quantity</label>
-                <input id="stock-current-qty" type="number" disabled style="width:100%; padding:0.6rem 0.75rem; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc; color:#64748b; font-size:0.9rem; box-sizing:border-box;">
+            <div id="stock-modal-resource" class="stock-modal-resource-info"></div>
+            <div class="stock-modal-field">
+                <label class="stock-modal-label">Current Quantity</label>
+                <input id="stock-current-qty" type="number" disabled class="stock-modal-input">
             </div>
-            <div style="margin-bottom:1.5rem;">
-                <label style="font-size:0.8rem; font-weight:600; color:#475569; display:block; margin-bottom:0.4rem;">Threshold Level</label>
-                <input id="stock-threshold-input" type="number" min="0" style="width:100%; padding:0.6rem 0.75rem; border:1px solid #e2e8f0; border-radius:8px; font-size:0.9rem; box-sizing:border-box; outline:none;" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='#e2e8f0'">
+            <div class="stock-modal-field last">
+                <label class="stock-modal-label">Threshold Level</label>
+                <input id="stock-threshold-input" type="number" min="0" class="stock-modal-input">
             </div>
-            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+            <div class="stock-modal-actions">
                 <button onclick="deptApp.closeStockModal()" class="btn-secondary">Cancel</button>
                 <button onclick="deptApp.saveStockThreshold()" class="btn-primary">Save Threshold</button>
             </div>

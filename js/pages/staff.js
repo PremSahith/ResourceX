@@ -1,4 +1,14 @@
 const staffApp = {
+    stockData: [
+        { id: "s1", resourceType: "Laptop", currentQuantity: 18, thresholdLevel: 15 },
+        { id: "s2", resourceType: "Projector", currentQuantity: 8, thresholdLevel: 10 },
+        { id: "s3", resourceType: "Tablet", currentQuantity: 3, thresholdLevel: 8 },
+        { id: "s4", resourceType: "Monitor", currentQuantity: 2, thresholdLevel: 5 },
+        { id: "s5", resourceType: "Router", currentQuantity: 12, thresholdLevel: 10 },
+        { id: "s6", resourceType: "Printer", currentQuantity: 6, thresholdLevel: 6 }
+    ],
+    editStockId: null,
+
     init: function() {
         const user = Store.getCurrentUser();
         if(!user || user.role !== 'Staff') {
@@ -17,6 +27,7 @@ const staffApp = {
         this.renderMaintenance();
         this.renderReturns();
         this.renderProcurementTasks();
+        this.renderStockMonitoring();
     },
 
     bindNav: function() {
@@ -103,8 +114,24 @@ const staffApp = {
 
         const db = Store.getData();
         const approvedRequests = db.requests.filter(r => r.status === 'Approved');
+        const availableResources = db.resources.filter(res => res.status === 'Available');
 
         approvedRequests.forEach(req => {
+            let checkboxesHTML = '';
+            availableResources.forEach(res => {
+                checkboxesHTML += `
+                    <label>
+                        <input type="checkbox" value="${res.id}" class="alloc-cb-${req.id}" onchange="staffApp.updateMultiSelect('${req.id}', ${req.quantity})"> 
+                        ${res.id} - ${res.name}
+                        <span class="multi-status-text">${res.condition}</span>
+                    </label>
+                `;
+            });
+            
+            if (availableResources.length === 0) {
+                checkboxesHTML = `<div style="padding: 0.6rem; text-align: center; color: #94a3b8; font-size: 0.8rem;">No resources available in Global Pool</div>`;
+            }
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="td-id">${req.id}</td>
@@ -112,10 +139,15 @@ const staffApp = {
                 <td>${req.resourceType}</td>
                 <td>${String(req.quantity).padStart(2, '0')}</td>
                 <td>
-                    <select class="form-control" style="font-size:0.75rem; padding:0.25rem 0.5rem" id="alloc-res-${req.id}">
-                        <option value="">Auto-Assign from ${req.department} Pool</option>
-                        <option value="global">Draw from Global Pool</option>
-                    </select>
+                    <div class="multi-select-container">
+                        <div class="multi-select-header" id="multi-header-${req.id}" onclick="staffApp.toggleMultiDropdown('${req.id}')">
+                            <span class="multi-select-title" id="multi-title-${req.id}">Select Resources (0/${req.quantity})</span>
+                            <span class="material-symbols-outlined" style="font-size: 1.2rem; color: #94a3b8;">expand_more</span>
+                        </div>
+                        <div class="multi-select-dropdown" id="multi-drop-${req.id}" style="display:none;">
+                            ${checkboxesHTML}
+                        </div>
+                    </div>
                 </td>
                 <td style="text-align:right">
                     <button class="btn-primary" style="font-size:0.75rem" onclick="staffApp.allocateResource('${req.id}')">Allocate</button>
@@ -125,10 +157,76 @@ const staffApp = {
         });
     },
 
+    toggleMultiDropdown: function(reqId) {
+        const dropdown = document.getElementById(`multi-drop-${reqId}`);
+        const header = document.getElementById(`multi-header-${reqId}`);
+        
+        if(dropdown.style.display === 'none') {
+            // Close any open dropdowns
+            document.querySelectorAll('.multi-select-dropdown').forEach(d => d.style.display = 'none');
+            document.querySelectorAll('.multi-select-header').forEach(h => h.classList.remove('active'));
+            
+            dropdown.style.display = 'flex';
+            header.classList.add('active');
+            
+            // Close when clicking outside
+            document.addEventListener('click', function closeMenu(e) {
+                if(!e.target.closest(`.multi-select-container`)) {
+                    dropdown.style.display = 'none';
+                    header.classList.remove('active');
+                    document.removeEventListener('click', closeMenu);
+                }
+            });
+        } else {
+            dropdown.style.display = 'none';
+            header.classList.remove('active');
+        }
+    },
+
+    updateMultiSelect: function(reqId, targetQty) {
+        const checkboxes = document.querySelectorAll(`.alloc-cb-${reqId}:checked`);
+        const title = document.getElementById(`multi-title-${reqId}`);
+        const count = checkboxes.length;
+        
+        if (count === targetQty) {
+            title.textContent = `${count}/${targetQty} Selected ✅`;
+            title.style.color = '#16a34a';
+            title.style.fontWeight = '700';
+        } else {
+            title.textContent = `Select Resources (${count}/${targetQty})`;
+            title.style.color = 'var(--text-main)';
+            title.style.fontWeight = '500';
+        }
+    },
+
     allocateResource: function(reqId) {
-        Store.updateItem('requests', reqId, { status: "Allocated" });
-        alert("Resources have been allocated and are awaiting confirmation from the requestor.");
+        const checkboxes = document.querySelectorAll(`.alloc-cb-${reqId}:checked`);
+        const selectedOptions = Array.from(checkboxes).map(cb => cb.value);
+
+        const db = Store.getData();
+        const req = db.requests.find(r => r.id === reqId);
+
+        if (selectedOptions.length !== req.quantity) {
+            Store.showToast(`Please select exactly ${req.quantity} resource(s) for this request (you selected ${selectedOptions.length}).`, "error");
+            return;
+        }
+
+        // Update Request
+        Store.updateItem('requests', reqId, { status: "Allocated", assignedResources: selectedOptions.join(', ') });
+        
+        // Update all Selected Resources
+        selectedOptions.forEach(resourceId => {
+            Store.updateItem('resources', resourceId, { 
+                status: "Allocated",
+                assignedTo: req ? req.requestor : "Unknown Requestor",
+                department: req ? req.department : "Unknown Department",
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+            });
+        });
+
+        Store.showToast(`Request ${reqId} Allocated. ${selectedOptions.length} resource(s) assigned successfully.`, "success");
         this.renderAllocations();
+        this.renderInventory();
     },
 
     // 2. Resource Registration
@@ -473,6 +571,110 @@ const staffApp = {
         alert('Procurement logged. Assets added to ' + proc.department);
         this.renderProcurementTasks();
         this.renderInventory();
+    },
+
+    // Stock Monitoring
+    renderStockMonitoring: function() {
+        const tbody = document.getElementById('stock-monitoring-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        let safeCount = 0;
+        let nearCount = 0;
+        let lowCount = 0;
+
+        this.stockData.forEach(item => {
+            let status = '';
+            let statusBadge = '';
+            let showSendReq = false;
+
+            if (item.currentQuantity >= item.thresholdLevel) {
+                status = 'Safe';
+                statusBadge = `<span class="badge badge-stock-safe">Safe</span>`;
+                safeCount++;
+            } else if (item.currentQuantity >= item.thresholdLevel * 0.7) {
+                status = 'Near Threshold';
+                statusBadge = `<span class="badge badge-stock-near">Near Threshold</span>`;
+                nearCount++;
+            } else {
+                status = 'Low Stock';
+                statusBadge = `<span class="badge badge-stock-low">Low Stock</span>`;
+                lowCount++;
+                showSendReq = true;
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.resourceType}</td>
+                <td>${item.currentQuantity}</td>
+                <td>${item.thresholdLevel}</td>
+                <td>${statusBadge}</td>
+                <td style="text-align:right">
+                    <button class="btn-ghost btn-ghost-primary" onclick="staffApp.openStockModal('${item.id}')">
+                        <span class="material-symbols-outlined">edit</span> Edit Threshold
+                    </button>
+                    ${showSendReq ? `
+                    <button class="btn-ghost btn-ghost-danger" onclick="staffApp.sendStockRequest('${item.resourceType}')">
+                        <span class="material-symbols-outlined">send</span> Send Request
+                    </button>
+                    ` : ''}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const safeEl = document.getElementById('stock-safe-count');
+        const nearEl = document.getElementById('stock-near-count');
+        const lowEl = document.getElementById('stock-low-count');
+
+        if(safeEl) safeEl.textContent = safeCount;
+        if(nearEl) nearEl.textContent = nearCount;
+        if(lowEl) lowEl.textContent = lowCount;
+    },
+
+    openStockModal: function(id) {
+        const item = this.stockData.find(i => i.id === id);
+        if(!item) return;
+        this.editStockId = id;
+        document.getElementById('stock-modal-resource').textContent = `Resource: ${item.resourceType}`;
+        document.getElementById('stock-current-qty').value = item.currentQuantity;
+        document.getElementById('stock-threshold-input').value = item.thresholdLevel;
+        document.getElementById('stock-edit-modal').classList.add('active');
+    },
+
+    closeStockModal: function() {
+        this.editStockId = null;
+        document.getElementById('stock-edit-modal').classList.remove('active');
+        document.getElementById('stock-threshold-input').value = '';
+    },
+
+    saveStockThreshold: function() {
+        if (!this.editStockId) return;
+        const val = parseInt(document.getElementById('stock-threshold-input').value);
+        if (isNaN(val) || val < 0) {
+            Store.showToast("Threshold must be a non-negative integer.", "error");
+            return;
+        }
+
+        const itemIndex = this.stockData.findIndex(i => i.id === this.editStockId);
+        if(itemIndex > -1) {
+            this.stockData[itemIndex].thresholdLevel = val;
+            Store.showToast("Threshold updated successfully.", "success");
+            this.renderStockMonitoring();
+            this.closeStockModal();
+        }
+    },
+
+    sendStockRequest: function(resourceType) {
+        this.switchView('proc-tasks-view');
+        
+        // Update nav active state
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        const navItem = document.querySelector('.nav-item[data-target="proc-tasks-view"]');
+        if(navItem) navItem.classList.add('active');
+        
+        // Give context to the user
+        Store.showToast(`Navigated to Procurement Tasks for ${resourceType}.`, "warning");
     },
 
     logout: function() {

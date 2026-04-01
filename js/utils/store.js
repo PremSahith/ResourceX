@@ -23,16 +23,24 @@ const initialData = {
         { id: "REQ-102", resourceType: "Server Blades v2", quantity: 2, requestor: "Yaswanth Kumar", department: "IT Services", status: "Pending", priority: "High", date: "Oct 25, 2023", justification: "Server upgrade capacity" },
         { id: "REQ-103", resourceType: "Developer Laptops", quantity: 3, requestor: "Yaswanth Kumar", department: "IT Services", status: "Pending", priority: "Normal", date: "Oct 26, 2023", justification: "New team members joining" },
         { id: "REQ-104", resourceType: "External Hard Drives", quantity: 5, requestor: "Yaswanth Kumar", department: "IT Services", status: "Approved", priority: "Normal", date: "Oct 27, 2023", justification: "Local backup storage" }, // Appears in Staff Allocation
+        { id: "REQ-105", resourceType: "Wireless Access Points", quantity: 2, requestor: "Yaswanth Kumar", department: "IT Services", status: "Approved", priority: "High", date: "Oct 28, 2023", justification: "Network expansion in south wing" },
         
         // Alice's Requests (Requestor) & John's Incoming (Dept Head in HR)
         { id: "REQ-201", resourceType: "Laptop Bundles", quantity: 2, requestor: "Alice Worker", department: "HR Dept", status: "Approved", priority: "Normal", date: "Oct 22, 2023", justification: "New hires onboarding" }, // Appears in Staff Allocation
         { id: "REQ-202", resourceType: "Standing Desks", quantity: 2, requestor: "Alice Worker", department: "HR Dept", status: "Pending", priority: "Normal", date: "Oct 27, 2023", justification: "Employee wellness program" },
+        { id: "REQ-204", resourceType: "Presentation Clickers", quantity: 4, requestor: "Alice Worker", department: "HR Dept", status: "Approved", priority: "Low", date: "Oct 29, 2023", justification: "Training workshops" },
         { id: "REQ-203", resourceType: "Ergonomic Keyboards", quantity: 3, requestor: "Alice Worker", department: "HR Dept", status: "Pending", priority: "Low", date: "Oct 28, 2023", justification: "Ergonomic setup requested" },
         
         // Bob's Requests (Requestor) & Jane's Incoming (Dept Head in Ops)
         { id: "REQ-301", resourceType: "Projector Screens", quantity: 2, requestor: "Bob Builder", department: "Operations", status: "Rejected", priority: "Low", date: "Oct 18, 2023", justification: "Not enough budget" },
         { id: "REQ-302", resourceType: "Whiteboards", quantity: 4, requestor: "Bob Builder", department: "Operations", status: "Allocated", priority: "Low", date: "Oct 01, 2023", justification: "New meeting rooms" },
-        { id: "REQ-303", resourceType: "Walkie Talkies", quantity: 6, requestor: "Bob Builder", department: "Operations", status: "Pending", priority: "High", date: "Oct 29, 2023", justification: "Facility comms" }
+        { id: "REQ-303", resourceType: "Walkie Talkies", quantity: 6, requestor: "Bob Builder", department: "Operations", status: "Pending", priority: "High", date: "Oct 29, 2023", justification: "Facility comms" },
+        { id: "REQ-304", resourceType: "Heavy Duty Racks", quantity: 3, requestor: "Bob Builder", department: "Operations", status: "Approved", priority: "Normal", date: "Oct 30, 2023", justification: "New warehouse storage" },
+        
+        // Additional Mock Data for Allocation Tests
+        { id: "REQ-401", resourceType: "Ergonomic Chairs", quantity: 5, requestor: "Dr. Eleanor Vance", department: "Administration", status: "Approved", priority: "High", date: "Oct 29, 2023", justification: "New office layout" },
+        { id: "REQ-402", resourceType: "Standing Desks", quantity: 3, requestor: "Mike Torres", department: "Facilities", status: "Approved", priority: "Normal", date: "Oct 30, 2023", justification: "Facility control room upgrade" },
+        { id: "REQ-501", resourceType: "Dual Monitors", quantity: 4, requestor: "Yaswanth Kumar", department: "IT Services", status: "Approved", priority: "Low", date: "Oct 31, 2023", justification: "Developer workstations" }
     ],
     resources: [
         // Yaswanth's Assigned Resources (Requestor)
@@ -59,7 +67,28 @@ const initialData = {
         
         // Available / Global
         { id: "RES-6022", name: "Network Switch", type: "Hardware", department: "IT Services", serialNumber: "SN-110022", status: "Available", condition: "Good", assignedTo: "None", date: "Jun 10, 2023" },
-        { id: "RES-2233", name: "Printer Color", type: "Electronics", department: "Administration", serialNumber: "SN-001122", status: "Available", condition: "Fair", assignedTo: "None", date: "Oct 15, 2023" }
+        { id: "RES-2233", name: "Printer Color", type: "Electronics", department: "Administration", serialNumber: "SN-001122", status: "Available", condition: "Fair", assignedTo: "None", date: "Oct 15, 2023" },
+        { id: "RES-6023", name: "External HDD 2TB", type: "Accessories", department: "IT Services", serialNumber: "SN-556611", status: "Available", condition: "Good", assignedTo: "None", date: "Oct 10, 2023" },
+        { id: "RES-6024", name: "Wireless AP HD", type: "Hardware", department: "IT Services", serialNumber: "SN-556612", status: "Available", condition: "Good", assignedTo: "None", date: "Oct 11, 2023" },
+        { id: "RES-6025", name: "Laptop - ThinkPad", type: "Laptop", department: "HR Dept", serialNumber: "SN-556613", status: "Available", condition: "Good", assignedTo: "None", date: "Oct 12, 2023" },
+        { id: "RES-6026", name: "Laser Pointer", type: "Accessories", department: "HR Dept", serialNumber: "SN-556614", status: "Available", condition: "New", assignedTo: "None", date: "Oct 28, 2023" },
+        { id: "RES-6027", name: "Steel Rack Shelf", type: "Furniture", department: "Operations", serialNumber: "SN-556615", status: "Available", condition: "New", assignedTo: "None", date: "Oct 29, 2023" },
+        
+        // Additional Available Items for Mock Allocations
+        { id: "RES-6028", name: "Ergo Chair Pro", type: "Furniture", department: "Administration", serialNumber: "SN-98701", status: "Available", condition: "New", assignedTo: "None", date: "Sep 15, 2023" },
+        { id: "RES-6029", name: "Ergo Chair Pro", type: "Furniture", department: "Administration", serialNumber: "SN-98702", status: "Available", condition: "New", assignedTo: "None", date: "Sep 15, 2023" },
+        { id: "RES-6030", name: "Ergo Chair Pro", type: "Furniture", department: "Administration", serialNumber: "SN-98703", status: "Available", condition: "New", assignedTo: "None", date: "Sep 15, 2023" },
+        { id: "RES-6031", name: "Ergo Chair Pro", type: "Furniture", department: "Administration", serialNumber: "SN-98704", status: "Available", condition: "Good", assignedTo: "None", date: "Sep 15, 2023" },
+        { id: "RES-6032", name: "Ergo Chair Pro", type: "Furniture", department: "Administration", serialNumber: "SN-98705", status: "Available", condition: "Good", assignedTo: "None", date: "Sep 15, 2023" },
+        
+        { id: "RES-6033", name: "Stand Desk X", type: "Furniture", department: "Facilities", serialNumber: "SN-44331", status: "Available", condition: "New", assignedTo: "None", date: "Aug 10, 2023" },
+        { id: "RES-6034", name: "Stand Desk X", type: "Furniture", department: "Facilities", serialNumber: "SN-44332", status: "Available", condition: "New", assignedTo: "None", date: "Aug 10, 2023" },
+        { id: "RES-6035", name: "Stand Desk X", type: "Furniture", department: "Facilities", serialNumber: "SN-44333", status: "Available", condition: "Good", assignedTo: "None", date: "Aug 10, 2023" },
+        
+        { id: "RES-6036", name: "Dell 27in Monitor", type: "Electronics", department: "IT Services", serialNumber: "SN-112211", status: "Available", condition: "Good", assignedTo: "None", date: "Jan 12, 2023" },
+        { id: "RES-6037", name: "Dell 27in Monitor", type: "Electronics", department: "IT Services", serialNumber: "SN-112212", status: "Available", condition: "Good", assignedTo: "None", date: "Jan 12, 2023" },
+        { id: "RES-6038", name: "Dell 27in Monitor", type: "Electronics", department: "IT Services", serialNumber: "SN-112213", status: "Available", condition: "Fair", assignedTo: "None", date: "Jan 12, 2023" },
+        { id: "RES-6039", name: "Dell 27in Monitor", type: "Electronics", department: "IT Services", serialNumber: "SN-112214", status: "Available", condition: "Fair", assignedTo: "None", date: "Jan 12, 2023" }
     ],
     procurements: [
         // Pending (For Registrar Approval)
@@ -124,9 +153,9 @@ class DataStore {
     }
 
     init() {
-        if (localStorage.getItem('rx_initialized') !== 'v2') {
+        if (localStorage.getItem('rx_initialized') !== 'v3') {
             this.resetToDefaults();
-            localStorage.setItem('rx_initialized', 'v2');
+            localStorage.setItem('rx_initialized', 'v3');
         }
     }
 
@@ -212,6 +241,31 @@ class DataStore {
                 container.removeChild(toast);
             }
         }, 3000);
+    }
+
+    // Generic Table Filter
+    filterTable(inputEl, tbodyId) {
+        const term = inputEl.value.toLowerCase();
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+            // Only hide rows if they do not contain the term
+            row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+        });
+    }
+
+    // Global App Search across Current Active View
+    globalSearch(term) {
+        term = term.toLowerCase();
+        const activeView = document.querySelector('.view-section.active');
+        if (!activeView) return;
+        
+        // Find all currently rendered rows in the active view
+        const rows = activeView.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+        });
     }
 }
 
