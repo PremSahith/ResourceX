@@ -152,7 +152,7 @@
                     <p class="page-subtitle">Submit a new request for organizational resources.</p>
                     
                     <div class="form-card">
-                        <form id="requestForm" onsubmit="app.submitRequest(event)">
+                        <form id="requestForm" onsubmit="app.submitRequest(event)" novalidate>
                             <div class="form-group">
                                 <label class="form-label">Managing Department</label>
                                 <select class="form-control" id="req-dept" required onchange="app.updateResourceDropdown()">
@@ -287,7 +287,7 @@
                 <p class="page-subtitle">Submit a request to procure new resources not currently available in the inventory.</p>
                 
                 <div class="form-card">
-                    <form id="procurementForm" onsubmit="app.submitProcurement(event)">
+                    <form id="procurementForm" onsubmit="app.submitProcurement(event)" novalidate>
                         <div class="form-group">
                             <label class="form-label">Requesting Department</label>
                             <select class="form-control" id="proc-dept" required>

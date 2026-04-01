@@ -282,6 +282,11 @@ const deptApp = {
         const reason = document.getElementById('proc-reason').value;
         const user = Store.getCurrentUser();
 
+        if (!type.trim() || isNaN(qty) || qty < 1 || !reason.trim()) {
+            Store.showToast("Please fill in all fields correctly before submitting.", "error");
+            return;
+        }
+
         Store.addItem('procurements', {
             id: `PROC-${Math.floor(100 + Math.random() * 900)}`,
             item: type,

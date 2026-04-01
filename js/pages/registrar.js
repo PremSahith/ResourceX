@@ -11,9 +11,56 @@ const regApp = {
         document.querySelector('.user-role').textContent = 'University Registrar';
         
         this.bindNav();
+        this.renderDashboard();
         this.renderProcurementApprovals();
         this.renderGlobalRequests();
         this.renderAnalytics();
+    },
+
+    // 0. Dashboard Overview
+    renderDashboard: function() {
+        const data = Store.getData();
+        const resources = data.resources || [];
+        const requests = data.requests || [];
+        const procurements = data.procurements || [];
+
+        // Stats
+        document.getElementById('dash-main-assets').textContent = resources.length.toLocaleString();
+        document.getElementById('dash-main-reqs').textContent = requests.filter(r => r.status === 'Pending').length;
+        document.getElementById('dash-main-procs').textContent = procurements.filter(p => p.status === 'Pending').length;
+        document.getElementById('dash-main-approved').textContent = requests.filter(r => r.status === 'Approved').length + procurements.filter(p => p.status === 'Approved').length;
+
+        // Recent Requests
+        const reqTbody = document.getElementById('dash-req-tbody');
+        if(reqTbody) {
+            reqTbody.innerHTML = '';
+            requests.slice(0, 5).forEach(r => {
+                let badgeClass = r.status === 'Approved' || r.status === 'Allocated' ? 'allocated' : (r.status === 'Rejected' ? 'rejected' : 'pending');
+                reqTbody.innerHTML += `
+                    <tr>
+                        <td>${r.id}</td>
+                        <td>${r.department}</td>
+                        <td><span class="badge ${badgeClass}">${r.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Actionable Procurements
+        const procTbody = document.getElementById('dash-proc2-tbody');
+        if(procTbody) {
+            procTbody.innerHTML = '';
+            const actionProcs = procurements.filter(p => p.status === 'Pending').slice(0, 5);
+            actionProcs.forEach(p => {
+                procTbody.innerHTML += `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td>${p.resourceType}</td>
+                        <td><span class="badge pending">Pending</span></td>
+                    </tr>
+                `;
+            });
+        }
     },
 
     bindNav: function() {
@@ -78,8 +125,10 @@ const regApp = {
             let actionCol = '';
             if(p.status === 'Pending') {
                 actionCol = `
-                    <button class="btn-primary" style="font-size:0.75rem; background:#16a34a" onclick="regApp.acceptProcurement('${p.id}')">Accept</button>
-                    <button class="btn-danger" style="font-size:0.75rem" onclick="regApp.rejectProcurement('${p.id}')">Reject</button>
+                    <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                        <button class="btn-primary" style="font-size:0.75rem; background:#16a34a; border-color:#16a34a; padding: 0.25rem 0.75rem" onclick="regApp.acceptProcurement('${p.id}')">Accept</button>
+                        <button class="btn-danger" style="font-size:0.75rem; padding: 0.25rem 0.75rem" onclick="regApp.rejectProcurement('${p.id}')">Reject</button>
+                    </div>
                 `;
             } else {
                 actionCol = statusBadge;
@@ -102,12 +151,14 @@ const regApp = {
         Store.updateItem('procurements', id, { status: "Approved" });
         alert('Procurement Approved. Task passed to Staff for fulfillment.');
         this.renderProcurementApprovals();
+        this.renderDashboard();
     },
 
     rejectProcurement: function(id) {
         if(confirm("Reject this procurement request?")) {
             Store.updateItem('procurements', id, { status: "Rejected" });
             this.renderProcurementApprovals();
+            this.renderDashboard();
         }
     },
 
@@ -118,7 +169,17 @@ const regApp = {
         tbody.innerHTML = '';
 
         // All requests or filtered
-        const requests = Store.getData().requests;
+        let requests = Store.getData().requests || [];
+
+        const filterStatus = document.getElementById('filterStatus')?.value || 'All';
+        const filterDept = document.getElementById('filterDept')?.value || 'All';
+
+        if(filterStatus !== 'All') {
+            requests = requests.filter(r => r.status === filterStatus);
+        }
+        if(filterDept !== 'All') {
+            requests = requests.filter(r => r.department === filterDept);
+        }
 
         requests.forEach(r => {
             let statusBadge = `<span class="badge ${r.status.toLowerCase()}">${r.status}</span>`;

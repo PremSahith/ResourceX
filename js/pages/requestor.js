@@ -74,6 +74,11 @@ const app = {
         const reason = document.getElementById('req-reason').value;
         const user = Store.getCurrentUser();
 
+        if (!dept || !type || isNaN(qty) || qty < 1 || !reason.trim()) {
+            Store.showToast("Please fill in all fields correctly before submitting.", "error");
+            return;
+        }
+
         const newId = `REQ-${Math.floor(1000 + Math.random() * 9000)}`;
         const dateStr = new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric', year:'numeric'});
 
@@ -107,6 +112,11 @@ const app = {
         const qty = parseInt(document.getElementById('proc-qty').value);
         const reason = document.getElementById('proc-reason').value;
         const user = Store.getCurrentUser();
+
+        if (!dept || !type.trim() || isNaN(qty) || qty < 1 || !reason.trim()) {
+            Store.showToast("Please fill in all fields correctly before submitting.", "error");
+            return;
+        }
 
         const newId = `PRC-${Math.floor(1000 + Math.random() * 9000)}`;
         const dateStr = new Date().toLocaleDateString('en-US', {month: 'short', day: 'numeric', year:'numeric'});

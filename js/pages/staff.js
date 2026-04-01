@@ -7,6 +7,14 @@ const staffApp = {
         { id: "s5", resourceType: "Router", currentQuantity: 12, thresholdLevel: 10 },
         { id: "s6", resourceType: "Printer", currentQuantity: 6, thresholdLevel: 6 }
     ],
+    departments: ["IT Services", "Engineering", "Administration", "Library", "Science"],
+    resourceTypes: {
+        "IT Services": ["Laptop", "Monitor", "Router"],
+        "Engineering": ["Projector", "Workstation"],
+        "Administration": ["Printer", "Desk"],
+        "Library": ["Tablet", "Scanner"],
+        "Science": ["Microscope", "Sensor"]
+    },
     editStockId: null,
 
     init: function() {
@@ -249,28 +257,43 @@ const staffApp = {
     submitRegistration: function() {
         const tbody = document.getElementById('registration-tbody');
         let count = 0;
+        let errors = false;
+
         Array.from(tbody.children).forEach(tr => {
             const inputs = tr.querySelectorAll('input');
-            const type = inputs[1].value;
-            const sn = inputs[4].value;
-            if(type) {
-                Store.addItem('resources', {
-                    id: `RES-${Math.floor(1000 + Math.random() * 9000)}`,
-                    name: type,
-                    type: type,
-                    department: "Global Ops",
-                    serialNumber: sn || "N/A",
-                    status: "Available",
-                    condition: "New",
-                    assignedTo: "None",
-                    date: new Date().toLocaleDateString('en-US')
-                });
-                count++;
+            const type = inputs[1].value.trim();
+            const mfg = inputs[2].value.trim();
+            const loc = inputs[3].value.trim();
+            const sn = inputs[4].value.trim();
+            
+            if (type || mfg || loc || sn) {
+                if (!type || !mfg || !loc || !sn) {
+                    errors = true;
+                } else {
+                    Store.addItem('resources', {
+                        id: `RES-${Math.floor(1000 + Math.random() * 9000)}`,
+                        name: `${mfg} ${type}`,
+                        type: type,
+                        department: "Global Ops",
+                        serialNumber: sn,
+                        location: loc,
+                        status: "Available",
+                        condition: "New",
+                        assignedTo: "None",
+                        date: new Date().toLocaleDateString('en-US')
+                    });
+                    count++;
+                }
             }
         });
         
+        if (errors) {
+            Store.showToast("Please fully complete any rows you have started filling.", "error");
+            return;
+        }
+
         if (count > 0) {
-            alert(`${count} new assets registered to the Global Pool.`);
+            Store.showToast(`${count} new assets registered to the Global Pool.`, "success");
             tbody.innerHTML = `
                 <tr>
                     <td><input type="text" class="form-control" value="RES-Auto1" readonly></td>
@@ -281,9 +304,30 @@ const staffApp = {
                 </tr>
             `;
             this.renderInventory();
+            this.renderDashboard();
         } else {
-            alert('Please enter at least the Type/Model.');
+            Store.showToast("Please fill in at least one row to register assets.", "error");
         }
+    },
+
+    logPurchase: function() {
+        const tbody = document.querySelector('#proctask-tbody');
+        if (!tbody) return;
+        
+        const inputs = tbody.querySelectorAll('input');
+        if (inputs.length < 2) return;
+        
+        const vendor = inputs[0].value.trim();
+        const invoice = inputs[1].value.trim();
+        
+        if (!vendor || !invoice) {
+            Store.showToast("Please provide both Vendor Name and Invoice Number.", "error");
+            return;
+        }
+        
+        Store.showToast("Procurement logged successfully!", "success");
+        inputs[0].value = '';
+        inputs[1].value = '';
     },
 
     // 3. Manage Inventory
@@ -306,7 +350,7 @@ const staffApp = {
                 <td>${statusBadge}</td>
                 <td>${res.department}</td>
                 <td style="text-align:right">
-                    <button class="btn-secondary" style="font-size:0.75rem">Edit</button>
+                    <button class="btn-secondary" style="font-size:0.75rem" onclick="staffApp.openEditResourceModal('${res.id}')">Edit</button>
                     ${res.status !== 'Scrapped' ? `<button class="btn-danger" style="font-size:0.75rem" onclick="staffApp.scrapResource('${res.id}')">Scrap</button>` : ''}
                 </td>
             `;
@@ -317,8 +361,139 @@ const staffApp = {
     scrapResource: function(resId) {
         if(confirm("Permanently mark this resource as scrapped?")) {
             Store.updateItem('resources', resId, { status: "Scrapped" });
+            Store.showToast(`Resource ${resId} marked as scrapped!`, "error");
             this.renderInventory();
+            this.renderDashboard();
         }
+    },
+
+    // 3.1 Edit Resource Dialog
+
+    openEditResourceModal: function(id) {
+        const res = Store.getData().resources.find(r => r.id === id);
+        if(!res) return;
+        
+        document.getElementById('er-id').value = res.id;
+        document.getElementById('er-code').value = res.code || res.id;
+        document.getElementById('er-location').value = res.location || '';
+        
+        // Sometimes mock data condition is "Fair" instead of "Average"
+        let cond = res.condition || 'Average';
+        if(cond === 'Fair') cond = 'Average';
+        if(cond === 'New') cond = 'Good';
+        document.getElementById('er-condition').value = cond;
+        
+        document.getElementById('er-status').value = res.status || 'Available';
+        
+        document.getElementById('edit-resource-modal').classList.add('active');
+    },
+
+    closeEditResourceModal: function() {
+        document.getElementById('edit-resource-modal').classList.remove('active');
+        document.getElementById('editResourceForm').reset();
+    },
+
+    submitEditResource: function(e) {
+        e.preventDefault();
+        const id = document.getElementById('er-id').value;
+        const loc = document.getElementById('er-location').value;
+        const cond = document.getElementById('er-condition').value;
+        const status = document.getElementById('er-status').value;
+
+        Store.updateItem('resources', id, {
+            location: loc,
+            condition: cond,
+            status: status
+        });
+
+        Store.showToast(`Resource ${id} updated!`, "success");
+        this.renderInventory();
+        this.renderDashboard();
+        this.closeEditResourceModal();
+    },
+
+    // 3.2 Add Resource Dialog
+
+    openAddResourceModal: function() {
+        const typeSelect = document.getElementById('ar-type');
+        typeSelect.innerHTML = '<option value="">Select Resource Type...</option>';
+        
+        let allTypes = [];
+        Object.values(this.resourceTypes).forEach(arr => {
+            allTypes = allTypes.concat(arr);
+        });
+        allTypes = [...new Set(allTypes)].sort();
+
+        allTypes.forEach(type => {
+            const opt = document.createElement('option');
+            opt.value = type;
+            opt.textContent = type;
+            typeSelect.appendChild(opt);
+        });
+        
+        document.getElementById('add-resource-modal').classList.add('active');
+    },
+
+    closeAddResourceModal: function() {
+        document.getElementById('add-resource-modal').classList.remove('active');
+        document.getElementById('addResourceForm').reset();
+    },
+
+    submitAddResource: function(e) {
+        e.preventDefault();
+        
+        const type = document.getElementById('ar-type').value;
+        const mfg = document.getElementById('ar-mfg').value;
+        const model = document.getElementById('ar-model').value;
+        const sn = document.getElementById('ar-sn').value;
+        const loc = document.getElementById('ar-location').value;
+        const cond = document.getElementById('ar-condition').value;
+
+        if (!type || !mfg || !model || !sn || !loc || !cond) {
+            Store.showToast("Please fill in all fields", "error");
+            return;
+        }
+
+        const db = Store.getData();
+        const resources = db.resources || [];
+        
+        // Validation: Unique Serial Number
+        const isDuplicate = resources.some(r => r.serialNumber === sn);
+        if (isDuplicate) {
+            Store.showToast("Serial number already exists", "error");
+            return;
+        }
+
+        // Generating Code
+        const deptPrefix = "GL"; // Global Pool prefix
+        const typePrefix = type.substring(0, 3).toUpperCase();
+        
+        const sameTypeRes = resources.filter(r => r.type === type);
+        const nextNumber = String(sameTypeRes.length + 1).padStart(3, '0');
+        
+        const generatedCode = `${deptPrefix}-${typePrefix}-${nextNumber}`;
+
+        const newResource = {
+            code: generatedCode,         // specifically requested code format
+            id: generatedCode,           // Using this as ID so it renders perfectly in table
+            internalId: "r" + (resources.length + 1), // fulfilling the "r + length + 1" requirement
+            type: type,
+            name: `${mfg} ${model}`,
+            department: "Global Ops",
+            serialNumber: sn,
+            location: loc,
+            condition: cond,
+            status: "Available",
+            assignedTo: "None",
+            date: new Date().toLocaleDateString('en-US')
+        };
+
+        Store.addItem('resources', newResource);
+        Store.showToast(`Resource ${generatedCode} added successfully!`, "success");
+        
+        this.renderInventory();
+        this.renderDashboard();
+        this.closeAddResourceModal();
     },
 
     // 4. Maintenance Management
