@@ -8,6 +8,7 @@ const deptApp = {
         { id: "s6", resourceType: "Printer", currentQuantity: 6, thresholdLevel: 6 }
     ],
     editStockId: null,
+    chartInstances: {},
 
     init: function() {
         const user = Store.getCurrentUser();
@@ -26,6 +27,11 @@ const deptApp = {
         this.renderProcurements();
         this.renderDashboard();
         this.renderStockMonitoring();
+        
+        // Wait briefly for Chart.js to initialize if it's loading over CDN asynchronously
+        setTimeout(() => {
+            this.renderAnalytics();
+        }, 300);
     },
 
     bindNav: function() {
@@ -410,6 +416,148 @@ const deptApp = {
             procTypeInput.value = resourceType;
             procTypeInput.focus();
         }
+    },
+
+    renderAnalytics: function() {
+        if (typeof Chart === 'undefined') return;
+        
+        const user = Store.getCurrentUser();
+        const data = Store.getData();
+        const deptResources = data.resources.filter(r => r.department === user.department);
+        
+        // 1. Resource Distribution
+        let available = 0, allocated = 0, maintenance = 0, scrap = 0;
+        deptResources.forEach(r => {
+            if (r.status === 'Available') available++;
+            else if (r.status === 'Allocated') allocated++;
+            else if (r.status === 'Scrapped') scrap++;
+            else maintenance++;
+        });
+
+        const ctxDist = document.getElementById('chart-distribution');
+        if (ctxDist) {
+            if (this.chartInstances.dist) this.chartInstances.dist.destroy();
+            this.chartInstances.dist = new Chart(ctxDist, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Available', 'Allocated', 'Maintenance', 'Scrap'],
+                    datasets: [{
+                        data: [available, allocated, maintenance, scrap],
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: { usePointStyle: true, padding: 20 }
+                        } 
+                    }
+                }
+            });
+        }
+
+        // 2. Monthly Request Trends (Mock Data Generation mirroring the image Jan-Jun)
+        const ctxTrends = document.getElementById('chart-trends');
+        if (ctxTrends) {
+            if (this.chartInstances.trends) this.chartInstances.trends.destroy();
+            this.chartInstances.trends = new Chart(ctxTrends, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Requests',
+                        data: [45, 52, 48, 61, 55, 68],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#3b82f6',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        x: { grid: { display: false } },
+                        y: { 
+                            beginAtZero: true, 
+                            max: 80,
+                            grid: { color: '#f1f5f9', borderDash: [5, 5] },
+                            border: { display: false }
+                        } 
+                    },
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: { usePointStyle: true, boxWidth: 10 }
+                        } 
+                    }
+                }
+            });
+        }
+
+        // 3. Most Used Resources (Horizontal Bar logic)
+        const ctxUsed = document.getElementById('chart-most-used');
+        if (ctxUsed) {
+            if (this.chartInstances.used) this.chartInstances.used.destroy();
+            this.chartInstances.used = new Chart(ctxUsed, {
+                type: 'bar',
+                data: {
+                    labels: ['Laptops', 'Projectors', 'Tablets', 'Monitors', 'Routers', 'Printers'],
+                    datasets: [{
+                        label: 'Usage %',
+                        data: [85, 72, 65, 58, 45, 38],
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6,
+                        maxBarThickness: 32
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        x: { 
+                            beginAtZero: true, 
+                            max: 100,
+                            grid: { color: '#f1f5f9', borderDash: [5, 5] },
+                            border: { display: false }
+                        },
+                        y: { grid: { display: false } }
+                    },
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: { usePointStyle: true, boxWidth: 10 }
+                        } 
+                    }
+                }
+            });
+        }
+
+        // 4. Update KPI Text
+        // Calculate Utilization Rate = Allocated / Total Active Output
+        let total = available + allocated + maintenance + scrap;
+        let utilRate = total > 0 ? Math.round((allocated / total) * 100) : 0;
+        
+        const kpiAvg = document.getElementById('kpi-avg-req');
+        const kpiUtil = document.getElementById('kpi-utilization');
+        const kpiAppr = document.getElementById('kpi-approval-time');
+        
+        if (kpiAvg) kpiAvg.textContent = "54.7"; 
+        if (kpiUtil) kpiUtil.textContent = utilRate + "%";
+        if (kpiAppr) kpiAppr.textContent = "2.3 days";
     },
     
     logout: function() {

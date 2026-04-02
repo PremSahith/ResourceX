@@ -91,6 +91,10 @@ const initialData = {
         { id: "RES-6039", name: "Dell 27in Monitor", type: "Electronics", department: "IT Services", serialNumber: "SN-112214", status: "Available", condition: "Fair", assignedTo: "None", date: "Jan 12, 2023" }
     ],
     procurements: [
+        // Pending Dept Head Approval
+        { id: "PROC-810", resourceType: "Ergonomic Chairs", quantity: 2, department: "IT Services", requestedBy: "Yaswanth Kumar", status: "Pending Approval", date: "Oct 27, 2023", justification: "New team members joining." },
+        { id: "PROC-811", resourceType: "Wireless Keyboards", quantity: 5, department: "IT Services", requestedBy: "Mike Torres", status: "Pending Approval", date: "Oct 28, 2023", justification: "Replacing broken peripherals." },
+
         // Pending (For Registrar Approval)
         { id: "PROC-819", resourceType: "Server Blades v2", quantity: 10, department: "IT Services", requestedBy: "Sarah Jenkins", status: "Pending", date: "Oct 26, 2023", justification: "Capacity increase required." },
         { id: "PROC-820", resourceType: "HR Software Licenses", quantity: 5, department: "HR Dept", requestedBy: "John Doe", status: "Pending", date: "Oct 28, 2023", justification: "New system rollout." },
@@ -153,9 +157,9 @@ class DataStore {
     }
 
     init() {
-        if (localStorage.getItem('rx_initialized') !== 'v3') {
+        if (localStorage.getItem('rx_initialized') !== 'v4') {
             this.resetToDefaults();
-            localStorage.setItem('rx_initialized', 'v3');
+            localStorage.setItem('rx_initialized', 'v4');
         }
     }
 

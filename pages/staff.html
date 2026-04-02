@@ -173,37 +173,11 @@
 
                 <!-- 2. Resource Registration -->
                 <div id="registration-view" class="view-section">
-                    <h1 class="page-title">Resource Registration</h1>
-                    <p class="page-subtitle">Onboard newly purchased resources into the system inventory.</p>
+                    <h1 class="page-title">Bulk Resource Registration</h1>
+                    <p class="page-subtitle">Process delivered purchases by logging serial records per invoice.</p>
 
-                    <div class="form-card" style="max-width:100%">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
-                            <h3 class="data-section-title">Bulk Asset Registration</h3>
-                            <button class="btn-secondary" onclick="staffApp.addRegistrationRow()">+ Add Row</button>
-                        </div>
-                        
-                        <table class="table" style="background:#f8fafc; border-radius:8px">
-                            <thead>
-                                <tr>
-                                    <th>Resource Code</th>
-                                    <th>Type/Model</th>
-                                    <th>Manufacturer</th>
-                                    <th>Location</th>
-                                    <th>S/N</th>
-                                </tr>
-                            </thead>
-                            <tbody id="registration-tbody">
-                                <tr>
-                                    <td><input type="text" class="form-control" value="RES-Auto1" readonly></td>
-                                    <td><input type="text" class="form-control" placeholder="e.g. MacBook Pro"></td>
-                                    <td><input type="text" class="form-control" placeholder="Apple"></td>
-                                    <td><input type="text" class="form-control" placeholder="HQ-Floor 2"></td>
-                                    <td><input type="text" class="form-control" placeholder="Serial No"></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <br>
-                        <button class="btn-primary" onclick="staffApp.submitRegistration()">Register Assets to Available</button>
+                    <div id="procurement-registration-container" style="display:flex; flex-direction:column; gap:2rem;">
+                        <!-- Registration Cards Injected Here via JS -->
                     </div>
                 </div>
 

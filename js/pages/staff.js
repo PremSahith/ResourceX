@@ -36,6 +36,7 @@ const staffApp = {
         this.renderReturns();
         this.renderProcurementTasks();
         this.renderStockMonitoring();
+        this.renderRegistrationCards();
     },
 
     bindNav: function() {
@@ -237,41 +238,116 @@ const staffApp = {
         this.renderInventory();
     },
 
-    // 2. Resource Registration
-    addRegistrationRow: function() {
-        const tbody = document.getElementById('registration-tbody');
-        const count = tbody.children.length + 1;
-        const newCode = `RES-Auto${count}`;
+    // 2. Modular Resource Registration
+    renderRegistrationCards: function() {
+        const container = document.getElementById('procurement-registration-container');
+        if (!container) return;
+        container.innerHTML = '';
         
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><input type="text" class="form-control" value="${newCode}" readonly></td>
-            <td><input type="text" class="form-control" placeholder="Type/Model"></td>
-            <td><input type="text" class="form-control" placeholder="Manufacturer"></td>
-            <td><input type="text" class="form-control" placeholder="Location"></td>
-            <td><input type="text" class="form-control" placeholder="S/N"></td>
-        `;
-        tbody.appendChild(tr);
+        // Find Fulfilled procurements that need registration
+        const procurements = Store.getData().procurements.filter(p => p.status === 'Fulfilled');
+        
+        if (procurements.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center; padding:3rem; background:#f8fafc; border-radius:8px; border:1px dashed #cbd5e1; color:#64748b;">
+                    <span class="material-symbols-outlined" style="font-size:3rem; opacity:0.5; margin-bottom:1rem; display:block;">inventory</span>
+                    <p style="font-size:1.1rem; margin-bottom:0.5rem">No Pendng Registrations</p>
+                    <p style="font-size:0.875rem">Purchases logged from Procurement Tasks will appear here for serial registration.</p>
+                </div>
+            `;
+            return;
+        }
+
+        procurements.forEach(p => {
+            const qty = parseInt(p.quantity) || 1;
+            let rowsHtml = '';
+            
+            for (let i = 0; i < qty; i++) {
+                const newCode = `RES-Auto${Math.floor(100 + Math.random()*900)}`;
+                rowsHtml += `
+                    <tr>
+                        <td><input type="text" class="form-control" value="${newCode}" readonly></td>
+                        <td><input type="text" class="form-control" value="${p.resourceType}" readonly></td>
+                        <td><input type="text" class="form-control" placeholder="Manufacturer (e.g. Dell)" value="${p.vendor || ''}"></td>
+                        <td><input type="text" class="form-control" placeholder="Location"></td>
+                        <td><input type="text" class="form-control" placeholder="Serial Number"></td>
+                    </tr>
+                `;
+            }
+
+            const card = document.createElement('div');
+            card.className = 'form-card';
+            card.style.maxWidth = '100%';
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid #e2e8f0;">
+                    <div>
+                        <h3 class="data-section-title" style="margin-bottom:0.25rem;">Register Purchase: ${p.resourceType}</h3>
+                        <div style="font-size:0.875rem; color:#64748b;">Procurement ID: <strong>${p.id}</strong> | Quantity Expected: <strong>${qty}</strong></div>
+                    </div>
+                    <div style="text-align:right; font-size:0.875rem;">
+                        <div>Vendor: <strong>${p.vendor || 'N/A'}</strong></div>
+                        <div>Invoice: <strong>${p.invoice || 'N/A'}</strong></div>
+                    </div>
+                </div>
+                
+                <table class="table" style="background:#f8fafc; border-radius:8px; margin-bottom:1.5rem;">
+                    <thead>
+                        <tr>
+                            <th>Resource Code</th>
+                            <th>Type/Model</th>
+                            <th>Manufacturer</th>
+                            <th>Storage Location</th>
+                            <th>Hardware S/N <span style="color:#ef4444">*</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="reg-tbody-${p.id}">
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+                
+                <div style="text-align:right;">
+                    <button class="btn-primary" onclick="staffApp.submitRegistrationCard('${p.id}')">Submit & Register Assets</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
     },
 
-    submitRegistration: function() {
-        const tbody = document.getElementById('registration-tbody');
+    submitRegistrationCard: function(procId) {
+        const tbody = document.getElementById(`reg-tbody-${procId}`);
+        if (!tbody) return;
+
         let count = 0;
         let errors = false;
+        let formatErrors = false;
+        let snErrors = false;
+        
+        const newResources = [];
+        const nameRegex = /^[a-zA-Z0-9\s.-]+$/;
+        const snRegex = /^[0-9]+$/;
 
         Array.from(tbody.children).forEach(tr => {
             const inputs = tr.querySelectorAll('input');
+            const code = inputs[0].value.trim();
             const type = inputs[1].value.trim();
             const mfg = inputs[2].value.trim();
             const loc = inputs[3].value.trim();
             const sn = inputs[4].value.trim();
             
-            if (type || mfg || loc || sn) {
-                if (!type || !mfg || !loc || !sn) {
-                    errors = true;
-                } else {
-                    Store.addItem('resources', {
+            if (!mfg || !loc || !sn) {
+                errors = true;
+            } else {
+                if (!nameRegex.test(mfg)) {
+                    formatErrors = true;
+                }
+                if (!snRegex.test(sn)) {
+                    snErrors = true;
+                }
+                
+                if (!errors && !formatErrors && !snErrors) {
+                    newResources.push({
                         id: `RES-${Math.floor(1000 + Math.random() * 9000)}`,
+                        code: code,
                         name: `${mfg} ${type}`,
                         type: type,
                         department: "Global Ops",
@@ -288,46 +364,33 @@ const staffApp = {
         });
         
         if (errors) {
-            Store.showToast("Please fully complete any rows you have started filling.", "error");
+            Store.showToast("Please fully complete all fields for every row in this batch.", "error");
+            return;
+        }
+
+        if (formatErrors) {
+            Store.showToast("Manufacturer Name can only contain characters and numbers.", "error");
+            return;
+        }
+
+        if (snErrors) {
+            Store.showToast("Serial Number must only contain numbers.", "error");
             return;
         }
 
         if (count > 0) {
-            Store.showToast(`${count} new assets registered to the Global Pool.`, "success");
-            tbody.innerHTML = `
-                <tr>
-                    <td><input type="text" class="form-control" value="RES-Auto1" readonly></td>
-                    <td><input type="text" class="form-control" placeholder="e.g. MacBook Pro"></td>
-                    <td><input type="text" class="form-control" placeholder="Apple"></td>
-                    <td><input type="text" class="form-control" placeholder="HQ-Floor 2"></td>
-                    <td><input type="text" class="form-control" placeholder="Serial No"></td>
-                </tr>
-            `;
+            // Push all to resources
+            newResources.forEach(res => Store.addItem('resources', res));
+            
+            // Mark Procurement as Registered
+            Store.updateItem('procurements', procId, { status: "Registered" });
+
+            Store.showToast(`Successfully registered ${count} assets to the Global Pool!`, "success");
+            
+            this.renderRegistrationCards();
             this.renderInventory();
             this.renderDashboard();
-        } else {
-            Store.showToast("Please fill in at least one row to register assets.", "error");
         }
-    },
-
-    logPurchase: function() {
-        const tbody = document.querySelector('#proctask-tbody');
-        if (!tbody) return;
-        
-        const inputs = tbody.querySelectorAll('input');
-        if (inputs.length < 2) return;
-        
-        const vendor = inputs[0].value.trim();
-        const invoice = inputs[1].value.trim();
-        
-        if (!vendor || !invoice) {
-            Store.showToast("Please provide both Vendor Name and Invoice Number.", "error");
-            return;
-        }
-        
-        Store.showToast("Procurement logged successfully!", "success");
-        inputs[0].value = '';
-        inputs[1].value = '';
     },
 
     // 3. Manage Inventory
@@ -726,26 +789,46 @@ const staffApp = {
     },
 
     logPurchase: function(id) {
-        const proc = Store.getData().procurements.find(p => p.id === id);
-        Store.updateItem('procurements', id, { status: 'Fulfilled' });
+        const vendorInput = document.getElementById('vend-' + id);
+        const invoiceInput = document.getElementById('inv-' + id);
         
-        // Auto register to global
-        for(let i=0; i<Math.min(proc.quantity, 10); i++) {
-            Store.addItem('resources', {
-                id: `RES-${Math.floor(1000 + Math.random() * 9000)}`,
-                name: proc.resourceType,
-                type: proc.resourceType,
-                department: proc.department,
-                serialNumber: "SN-AUTO",
-                status: "Available",
-                condition: "New",
-                assignedTo: "None",
-                date: new Date().toLocaleDateString('en-US')
-            });
+        const vendor = vendorInput ? vendorInput.value.trim() : '';
+        const invoice = invoiceInput ? invoiceInput.value.trim() : '';
+        
+        if (!vendor || !invoice) {
+            Store.showToast("Please provide both Vendor Name and Invoice Number before logging purchase.", "error");
+            if (!vendor && vendorInput) vendorInput.focus();
+            else if (!invoice && invoiceInput) invoiceInput.focus();
+            return;
         }
-        alert('Procurement logged. Assets added to ' + proc.department);
+
+        const vendorRegex = /^[a-zA-Z0-9\s.-]+$/;
+        const invoiceRegex = /^[0-9]+$/;
+        
+        if (!vendorRegex.test(vendor)) {
+            Store.showToast("Vendor Name can only contain characters and numbers.", "error");
+            if (vendorInput) vendorInput.focus();
+            return;
+        }
+        
+        if (!invoiceRegex.test(invoice)) {
+            Store.showToast("Invoice Number can only contain numbers.", "error");
+            if (invoiceInput) invoiceInput.focus();
+            return;
+        }
+
+        const proc = Store.getData().procurements.find(p => p.id === id);
+        if (!proc) return;
+        
+        Store.updateItem('procurements', id, { 
+            status: 'Fulfilled',
+            vendor: vendor,
+            invoice: invoice
+        });
+        
+        Store.showToast(`Purchase logged for Invoice ${invoice}. Assets are now pending Serial Registration.`, "success");
         this.renderProcurementTasks();
-        this.renderInventory();
+        this.renderRegistrationCards();
     },
 
     // Stock Monitoring

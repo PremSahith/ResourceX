@@ -1,4 +1,5 @@
 const adminApp = {
+    viewAllUsers: false,
     init: function() {
         const user = Store.getCurrentUser();
         if(!user || user.role !== 'System Admin') {
@@ -59,26 +60,52 @@ const adminApp = {
         if(elDepts) elDepts.textContent = depts.length;
         if(elRoles) elRoles.textContent = roles.size;
 
-        users.slice(0, 5).forEach(u => {
-            let roleBadge = `<span class="badge" style="background:#cbd5e1; color:#0f172a">${u.role}</span>`;
-            if (u.role === 'Dept Head') roleBadge = `<span class="badge pending" style="background:#dbeafe; color:#1d4ed8">${u.role}</span>`;
-            else if (u.role === 'Staff') roleBadge = `<span class="badge pending">${u.role}</span>`;
-            else if (u.role === 'System Admin') roleBadge = `<span class="badge" style="background:#fecaca; color:#b91c1c">${u.role}</span>`;
-            else if (u.role === 'Registrar') roleBadge = `<span class="badge allocated" style="background:#fef08a; color:#854d0e">${u.role}</span>`;
+        let displayUsers = [...users].reverse(); // newest first
+        
+        // Render Dashboard Table (Slice top 5)
+        if (tbody) {
+            displayUsers.slice(0, 5).forEach(u => {
+                tbody.appendChild(this.buildUserRow(u));
+            });
+        }
+        
+        // Render User Management Table (All)
+        const allBody = document.querySelector('#all-users-tbody');
+        if (allBody) {
+            allBody.innerHTML = '';
+            displayUsers.forEach(u => {
+                allBody.appendChild(this.buildUserRow(u));
+            });
+        }
+    },
+    
+    buildUserRow: function(u) {
+        let roleBadge = `<span class="badge" style="background:#cbd5e1; color:#0f172a">${u.role}</span>`;
+        if (u.role === 'Dept Head') roleBadge = `<span class="badge pending" style="background:#dbeafe; color:#1d4ed8">${u.role}</span>`;
+        else if (u.role === 'Staff') roleBadge = `<span class="badge pending">${u.role}</span>`;
+        else if (u.role === 'System Admin') roleBadge = `<span class="badge" style="background:#fecaca; color:#b91c1c">${u.role}</span>`;
+        else if (u.role === 'Registrar') roleBadge = `<span class="badge allocated" style="background:#fef08a; color:#854d0e">${u.role}</span>`;
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="font-weight:600">${u.name} <div style="font-size:0.75rem; color:#64748b; font-weight:normal">${u.email}</div></td>
-                <td>${roleBadge}</td>
-                <td>${u.department}</td>
-                <td><span class="badge allocated">${u.status}</span></td>
-                <td style="text-align:right">
-                    <button class="btn-secondary" style="font-size:0.75rem" onclick="adminApp.editUser('${u.id}')">Edit Access</button>
-                    ${u.role !== 'System Admin' ? `<button class="btn-danger" style="font-size:0.75rem" onclick="adminApp.deleteUser('${u.id}')">Delete</button>` : ''}
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-weight:600">${u.name} <div style="font-size:0.75rem; color:#64748b; font-weight:normal">${u.email}</div></td>
+            <td>${roleBadge}</td>
+            <td>${u.department}</td>
+            <td><span class="badge allocated">${u.status}</span></td>
+            <td style="text-align:right">
+                <button class="btn-secondary" style="font-size:0.75rem" onclick="adminApp.editUser('${u.id}')">Edit Access</button>
+                ${u.role !== 'System Admin' ? `<button class="btn-danger" style="font-size:0.75rem" onclick="adminApp.deleteUser('${u.id}')">Delete</button>` : ''}
+            </td>
+        `;
+        return tr;
+    },
+
+    triggerViewAll: function() {
+        this.switchView('user-manage-view');
+        // Update Sidebar active state manually since this isn't a direct sidebar click
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        const targetNav = document.querySelector('.nav-item[data-target="user-manage-view"]');
+        if(targetNav) targetNav.classList.add('active');
     },
 
     openModal: function(title, html, onConfirm) {
@@ -96,12 +123,100 @@ const adminApp = {
         document.getElementById('admin-modal').style.display = 'none';
     },
 
+    addUser: function() {
+        const db = Store.getData();
+        const depts = db.departments;
+        let deptOptions = depts.map(d => `<option value="${d.name}">${d.name}</option>`).join('');
+        
+        const html = `
+            <div style="margin-bottom:1rem">
+                <label style="display:block; margin-bottom:0.5rem; font-weight:500">Full Name</label>
+                <input type="text" id="modal-user-name" class="form-control" style="width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px" placeholder="e.g. John Doe">
+            </div>
+            <div style="margin-bottom:1rem">
+                <label style="display:block; margin-bottom:0.5rem; font-weight:500">Email Address</label>
+                <input type="email" id="modal-user-email" class="form-control" style="width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px" placeholder="user@resourcex.com">
+            </div>
+            <div style="margin-bottom:1rem">
+                <label style="display:block; margin-bottom:0.5rem; font-weight:500">System Role</label>
+                <select id="modal-user-role" class="form-control" style="width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px">
+                    <option value="Requestor">Requestor</option>
+                    <option value="Dept Head">Dept Head</option>
+                    <option value="Registrar">Registrar</option>
+                    <option value="Staff">Staff</option>
+                    <option value="System Admin">System Admin</option>
+                </select>
+            </div>
+            <div style="margin-bottom:1rem">
+                <label style="display:block; margin-bottom:0.5rem; font-weight:500">Department</label>
+                <select id="modal-user-dept" class="form-control" style="width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px">
+                    ${deptOptions}
+                </select>
+            </div>
+            <div style="margin-bottom:1rem">
+                <label style="display:block; margin-bottom:0.5rem; font-weight:500">Password</label>
+                <input type="password" id="modal-user-password" class="form-control" style="width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px" placeholder="Enter temporary password">
+            </div>
+        `;
+        this.openModal("Add New User", html, () => {
+            const name = document.getElementById('modal-user-name').value.trim();
+            const email = document.getElementById('modal-user-email').value.trim();
+            const role = document.getElementById('modal-user-role').value;
+            const dept = document.getElementById('modal-user-dept').value;
+            const password = document.getElementById('modal-user-password').value.trim();
+
+            const nameRegex = /^[a-zA-Z0-9\s.-]+$/;
+
+            if (!name || !email || !password) {
+                Store.showToast("Please fill out all fields including password.", "error");
+                return;
+            }
+
+            if (!nameRegex.test(name)) {
+                Store.showToast("Name can only contain characters and numbers.", "error");
+                return;
+            }
+
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(email)) {
+                Store.showToast("Please enter a valid email address.", "error");
+                document.getElementById('modal-user-email').focus();
+                return;
+            }
+
+            if (password.length < 6) {
+                Store.showToast("Password must be at least 6 characters long.", "error");
+                return;
+            }
+
+            Store.addItem('users', {
+                id: `U-9${Math.floor(100 + Math.random() * 900)}`,
+                name: name,
+                email: email,
+                password: password,
+                role: role,
+                department: dept,
+                status: "Active"
+            });
+            this.renderUsers();
+            Store.showToast("New user successfully added.", "success");
+            this.closeModal();
+        });
+    },
+
     editUser: function(id) {
         const user = Store.getData().users.find(u => u.id === id);
         if(!user) return;
+        const depts = Store.getData().departments || [];
+        const deptOptions = depts.map(d => `<option value="${d.name}" ${user.department === d.name ? 'selected' : ''}>${d.name}</option>`).join('');
+
         const html = `
             <div style="margin-bottom:1rem">
-                <label style="display:block; margin-bottom:0.5rem; font-weight:500">New Role for ${user.name}</label>
+                <label style="display:block; margin-bottom:0.5rem; font-weight:500">Name</label>
+                <input type="text" id="modal-edit-name" class="form-control" style="width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px" value="${user.name}">
+            </div>
+            <div style="margin-bottom:1rem">
+                <label style="display:block; margin-bottom:0.5rem; font-weight:500">Role</label>
                 <select id="modal-role-select" class="form-control" style="width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px">
                     <option value="Requestor" ${user.role === 'Requestor' ? 'selected' : ''}>Requestor</option>
                     <option value="Dept Head" ${user.role === 'Dept Head' ? 'selected' : ''}>Dept Head</option>
@@ -110,12 +225,75 @@ const adminApp = {
                     <option value="System Admin" ${user.role === 'System Admin' ? 'selected' : ''}>System Admin</option>
                 </select>
             </div>
+            <div style="margin-bottom:1rem">
+                <label style="display:block; margin-bottom:0.5rem; font-weight:500">Department</label>
+                <select id="modal-dept-select" class="form-control" style="width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px">
+                    ${deptOptions}
+                </select>
+            </div>
+            <div style="margin-bottom:1rem">
+                <label style="display:block; margin-bottom:0.5rem; font-weight:500">Account Status</label>
+                <select id="modal-status-select" class="form-control" style="width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px">
+                    <option value="Active" ${user.status === 'Active' ? 'selected' : ''}>Active</option>
+                    <option value="Inactive" ${user.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                    <option value="Suspended" ${user.status === 'Suspended' ? 'selected' : ''}>Suspended</option>
+                </select>
+            </div>
+            <div style="margin-bottom:1rem">
+                <label style="display:block; margin-bottom:0.5rem; font-weight:500">New Password <span style="font-size:0.75rem; color:#64748b; font-weight:normal">(Leave blank to keep current)</span></label>
+                <input type="password" id="modal-edit-password" placeholder="Enter new password" class="form-control" style="width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px">
+            </div>
         `;
-        this.openModal("Edit User Access", html, () => {
+        this.openModal("Edit User", html, () => {
+            const newName = document.getElementById('modal-edit-name').value.trim();
             const newRole = document.getElementById('modal-role-select').value;
-            Store.updateItem('users', id, { role: newRole });
+            const newDept = document.getElementById('modal-dept-select').value;
+            const newStatus = document.getElementById('modal-status-select').value;
+            const newPassword = document.getElementById('modal-edit-password').value.trim();
+            
+            const nameRegex = /^[a-zA-Z0-9\s.-]+$/;
+
+            if (!newName) {
+                Store.showToast("Name cannot be empty.", "error");
+                return;
+            }
+
+            if (!nameRegex.test(newName)) {
+                Store.showToast("Name can only contain characters and numbers.", "error");
+                return;
+            }
+            
+            if (newPassword.length > 0 && newPassword.length < 6) {
+                Store.showToast("Password must be at least 6 characters long.", "error");
+                return;
+            }
+
+            const updates = { 
+                name: newName,
+                role: newRole,
+                department: newDept,
+                status: newStatus
+            };
+
+            if (newPassword) {
+                updates.password = newPassword;
+            }
+
+            Store.updateItem('users', id, updates);
+            
+            const currentUser = Store.getCurrentUser();
+            if (currentUser && currentUser.id === id) {
+                const db = Store.getData();
+                db.currentUser.name = newName;
+                db.currentUser.role = newRole;
+                Store.saveData(db);
+                // Update nav/header directly if on page
+                const uiName = document.querySelector('.user-name');
+                if (uiName) uiName.textContent = newName;
+            }
+            
             this.renderUsers();
-            Store.showToast("Role updated permanently.", "success");
+            Store.showToast("User details updated permanently.", "success");
             this.closeModal();
         });
     },

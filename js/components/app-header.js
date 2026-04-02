@@ -10,7 +10,7 @@ class AppHeader extends HTMLElement {
                 if (storedData && storedData.currentUser) {
                     user = storedData.currentUser;
                 }
-            } catch(e) {}
+            } catch (e) { }
         }
 
         this.innerHTML = `
@@ -203,7 +203,7 @@ class AppHeader extends HTMLElement {
                             <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
                         </svg>
                     </span>
-                    <input type="text" placeholder="Search... (Try 'Monitors')" onkeyup="Store.globalSearch(this.value)" oninput="this.nextElementSibling.style.display = this.value ? 'flex' : 'none'">
+                    <input type="text" placeholder="Search..." onkeyup="Store.globalSearch(this.value)" oninput="this.nextElementSibling.style.display = this.value ? 'flex' : 'none'">
                     <span class="clear-btn" onclick="this.previousElementSibling.value=''; this.style.display='none'; Store.globalSearch(''); this.previousElementSibling.focus()">✕</span>
                 </div>
                 <div class="header-actions">
@@ -238,7 +238,6 @@ class AppHeader extends HTMLElement {
                             </div>
                             <a href="profile.html" class="dropdown-item"><span class="material-symbols-outlined dropdown-icon">person</span> My Profile</a>
                             <a href="profile.html" class="dropdown-item"><span class="material-symbols-outlined dropdown-icon">settings</span> Settings</a>
-                            <a href="#" class="dropdown-item" onclick="alert('Activity clicked')"><span class="material-symbols-outlined dropdown-icon">history</span> Activity Log</a>
                             <div class="dropdown-divider"></div>
                             <a href="login.html" class="dropdown-item text-danger" onclick="Store.logout()"><span class="material-symbols-outlined dropdown-icon">logout</span> Logout</a>
                         </div>
@@ -258,36 +257,36 @@ class AppHeader extends HTMLElement {
 
 // Ensure global scope for header actions
 window.HeaderActions = {
-    toggleProfileMenu: function(event) {
+    toggleProfileMenu: function (event) {
         event.stopPropagation();
         const menu = document.getElementById('profileMenu');
         const notifMenu = document.getElementById('notificationsMenu');
-        
+
         // close others
-        if(notifMenu) notifMenu.classList.remove('show');
-        
-        if (menu) {
-            menu.classList.toggle('show');
-        }
-    },
-    
-    toggleNotifications: function(event) {
-        event.stopPropagation();
-        const menu = document.getElementById('notificationsMenu');
-        const profMenu = document.getElementById('profileMenu');
-        
-        // close others
-        if(profMenu) profMenu.classList.remove('show');
-        
+        if (notifMenu) notifMenu.classList.remove('show');
+
         if (menu) {
             menu.classList.toggle('show');
         }
     },
 
-    initNotifications: function() {
+    toggleNotifications: function (event) {
+        event.stopPropagation();
+        const menu = document.getElementById('notificationsMenu');
+        const profMenu = document.getElementById('profileMenu');
+
+        // close others
+        if (profMenu) profMenu.classList.remove('show');
+
+        if (menu) {
+            menu.classList.toggle('show');
+        }
+    },
+
+    initNotifications: function () {
         const notifMenuElement = document.getElementById('notificationList');
         const badge = document.getElementById('notifBadge');
-        if(!notifMenuElement) return;
+        if (!notifMenuElement) return;
 
         let notifications = [];
         if (typeof Store !== 'undefined' && Store.getData) {
@@ -298,18 +297,18 @@ window.HeaderActions = {
                 notifications = data.notifications.filter(n => n.recipientRole === 'All' || n.recipientRole === user.role);
             }
         }
-        
+
         // Provide demo data if empty
-        if(notifications.length === 0) {
-           notifications = [
-               { id: "Dem1", title: "New Feature available", description: "Try out the new analytics dashboard.", time: "10 mins ago", read: false },
-               { id: "Dem2", title: "System Update", description: "System maintenance window scheduled for tonight.", time: "2 hours ago", read: false },
-               { id: "Dem3", title: "Welcome!", description: "Welcome to ResourceX.", time: "1 day ago", read: true }
-           ];
+        if (notifications.length === 0) {
+            notifications = [
+                { id: "Dem1", title: "New Feature available", description: "Try out the new analytics dashboard.", time: "10 mins ago", read: false },
+                { id: "Dem2", title: "System Update", description: "System maintenance window scheduled for tonight.", time: "2 hours ago", read: false },
+                { id: "Dem3", title: "Welcome!", description: "Welcome to ResourceX.", time: "1 day ago", read: true }
+            ];
         }
 
         const unreadCount = notifications.filter(n => !n.read).length;
-        if(badge) {
+        if (badge) {
             badge.innerText = unreadCount;
             badge.style.display = unreadCount > 0 ? 'flex' : 'none';
         }
@@ -323,21 +322,21 @@ window.HeaderActions = {
         `).join('');
     },
 
-    markAllRead: function() {
+    markAllRead: function () {
         alert("Marking all notifications as read.");
         const badge = document.getElementById('notifBadge');
-        if(badge) badge.style.display = 'none';
-        
+        if (badge) badge.style.display = 'none';
+
         const items = document.querySelectorAll('.notification-item.notif-unread');
         items.forEach(item => item.classList.remove('notif-unread'));
     }
 };
 
 // Close dropdowns when clicking outside
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     const pMenu = document.getElementById('profileMenu');
     const nMenu = document.getElementById('notificationsMenu');
-    
+
     if (pMenu && pMenu.classList.contains('show') && !event.target.closest('.dropdown-container')) {
         pMenu.classList.remove('show');
     }
